@@ -24,20 +24,15 @@ public class KingMovesCalculator implements PieceMovesCalculator{
         };
 
         for(int[] space : reachableSpaces) {
-                if(!(space[0] > 8 || space[0] < 1 || space[1] < 1 || space[1] > 8)) {
-                    ChessPosition potentialSpace = new ChessPosition(space[0], space[1]);
-                    ChessPiece pieceAtSpace = board.getPiece(potentialSpace);
+            if(!(space[0] > 8 || space[0] < 1 || space[1] < 1 || space[1] > 8)) {
+                ChessPosition potentialSpace = new ChessPosition(space[0], space[1]);
+                ChessPiece pieceAtSpace = board.getPiece(potentialSpace);
 
-                    if (pieceAtSpace == null) {
+                if (pieceAtSpace == null || pieceAtSpace.getTeamColor() != board.getPiece(position).getTeamColor()) {
                         moves.add(new ChessMove(position, potentialSpace, null));
-                    } else {
-                        if (pieceAtSpace.getTeamColor() != board.getPiece(position).getTeamColor()) {
-                            moves.add(new ChessMove(position, potentialSpace, null));
-                        }
-                    }
                 }
             }
-
+        }
         return moves;
     }
 }
