@@ -95,20 +95,28 @@ public class ChessGame {
         ChessPiece originalPiece = board.getPiece(move.getStartPosition());
         ChessPiece capturedPiece = board.getPiece(move.getEndPosition());
 
+        temporaryMove(move, originalPiece);
+        // The try-finally guarantees that the move will be undone even if there is an error in isInCheck()
+        try {
+            return isInCheck(originalPiece.getTeamColor());
+        } finally {
+            undoTemporaryMove(move, originalPiece, capturedPiece);
+        }
+    }
+
+    private void temporaryMove(ChessMove move, ChessPiece piece) {
         if(move.getPromotionPiece() == null) {
-            board.addPiece(move.getEndPosition(), originalPiece);
+            board.addPiece(move.getEndPosition(), piece);
         }
         else {
-            board.addPiece(move.getEndPosition(), new ChessPiece(originalPiece.getTeamColor(), move.getPromotionPiece()));
+            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
         }
         board.addPiece(move.getStartPosition(), null);
+    }
 
-        boolean inCheck = isInCheck(originalPiece.getTeamColor());
-
-        board.addPiece(move.getStartPosition(), originalPiece);
+    private void undoTemporaryMove(ChessMove move, ChessPiece startingPiece, ChessPiece capturedPiece) {
+        board.addPiece(move.getStartPosition(), startingPiece);
         board.addPiece(move.getEndPosition(), capturedPiece);
-
-        return inCheck;
     }
 
     /**
@@ -120,13 +128,7 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if(piece != null && teamTurn == piece.getTeamColor() && isValidMove(move)) {
-            if(move.getPromotionPiece() == null) {
-                board.addPiece(move.getEndPosition(), piece);
-            }
-            else {
-                board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
-            }
-            board.addPiece(move.getStartPosition(), null);
+            temporaryMove(move, piece);
             setTeamTurn(teamTurn == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE);
         }
         else {
