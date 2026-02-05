@@ -17,6 +17,19 @@ public class ChessBoard {
         this.board = new ChessPiece[8][8];
     }
 
+    public ChessBoard(ChessBoard otherBoard) {
+        this.board = new ChessPiece[8][8];
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = otherBoard.getPiece(position);
+                if(piece != null) {
+                    addPiece(position, piece);
+                }
+            }
+        }
+    }
+
     /**
      * Adds a chess piece to the chessboard
      *
