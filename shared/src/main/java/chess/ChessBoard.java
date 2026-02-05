@@ -109,7 +109,7 @@ public class ChessBoard {
             for (int col = 0; col < board[row].length; col++) {
                 ChessPiece piece = board[row][col];
                 if(piece != null && piece.getPieceType() == ChessPiece.PieceType.KING && piece.getTeamColor() == color) {
-                    return new ChessPosition(row, col);
+                    return new ChessPosition(row+1, col+1);
                 }
             }
         }
