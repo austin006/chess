@@ -100,21 +100,6 @@ public class ChessGame {
         return isInCheck(piece.getTeamColor(), tempBoard);
     }
 
-    private void temporaryMove(ChessMove move, ChessPiece piece) {
-        if(move.getPromotionPiece() == null) {
-            board.addPiece(move.getEndPosition(), piece);
-        }
-        else {
-            board.addPiece(move.getEndPosition(), new ChessPiece(piece.getTeamColor(), move.getPromotionPiece()));
-        }
-        board.addPiece(move.getStartPosition(), null);
-    }
-
-    private void undoTemporaryMove(ChessMove move, ChessPiece startingPiece, ChessPiece capturedPiece) {
-        board.addPiece(move.getStartPosition(), startingPiece);
-        board.addPiece(move.getEndPosition(), capturedPiece);
-    }
-
     /**
      * Makes a move in a chess game
      *
@@ -212,20 +197,6 @@ public class ChessGame {
             }
         }
         return false;
-    }
-
-    private Collection<ChessMove> getTeamValidMoves(TeamColor teamColor) {
-        Collection<ChessMove> allValidMoves = new ArrayList<>();
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition currentPosition = new ChessPosition(row, col);
-                ChessPiece currentPiece = board.getPiece(currentPosition);
-                if(currentPiece != null && currentPiece.getTeamColor() == teamColor) {
-                    allValidMoves.addAll(validMoves(currentPosition));
-                }
-            }
-        }
-        return allValidMoves;
     }
 
     /**
