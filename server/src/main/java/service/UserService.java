@@ -1,12 +1,17 @@
 package service;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
+import model.AuthData;
+import model.UserData;
 import service.request.LoginRequest;
-import service.request.LogoutRequest;
 import service.request.RegisterRequest;
 import service.result.LoginResult;
 import service.result.RegisterResult;
+
+import java.util.Objects;
+import java.util.UUID;
 
 public class UserService {
     private final UserDAO userDAO;
@@ -17,17 +22,62 @@ public class UserService {
         this.authDAO = authDAO;
     }
 
-    public RegisterResult register(RegisterRequest registerRequest) {
-        getUser(username);
-        createUser(userData);
-        createAuth(authData);
+    public RegisterResult register(RegisterRequest request) throws DataAccessException {
+        // Check the Request
+        if (request.username() == null || request.password() == null || request.email() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        // Check if username is already taken
+        if (userDAO.getUser(request.username()) != null) {
+            throw new DataAccessException("Error: already taken");
+        }
+
+        // Create the User
+        UserData newUser = new UserData(request.username(), request.password(), request.email());
+        userDAO.createUser(newUser);
+
+        // Generate an Auth Token -> this logs the user in
+        String token = UUID.randomUUID().toString();
+        AuthData newAuth = new AuthData(token, request.username());
+        authDAO.createAuth(newAuth);
+
+        // Return the successful Result
+        return new RegisterResult(request.username(), token);
     }
-    public LoginResult login(LoginRequest loginRequest) {
-        getUser(username);
-        createAuth(username);
+
+    public LoginResult login(LoginRequest request) throws DataAccessException {
+        // Check the Request
+        if (request.username() == null || request.password() == null) {
+            throw new DataAccessException("Error: bad request");
+        }
+
+        // Check if username exists
+        if (userDAO.getUser(request.username()) == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        // Check if password is incorrect
+        if (!Objects.equals(userDAO.getUser(request.username()).password(), request.password())) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        // Generate an Auth Token -> this logs the user in
+        String token = UUID.randomUUID().toString();
+        AuthData newAuth = new AuthData(token, request.username());
+        authDAO.createAuth(newAuth);
+
+        // Return the successful Result
+        return new LoginResult(request.username(), token);
     }
-    public void logout(LogoutRequest logoutRequest) {
-        getAuth(authToken);
-        deleteAuth(authToken);
+
+    public void logout(String authToken) throws DataAccessException {
+        // Check if username exists
+        if (authDAO.getAuth(authToken) == null) {
+            throw new DataAccessException("Error: unauthorized");
+        }
+
+        // Delete the Auth Token -> this logs the user out
+        authDAO.deleteAuth(authToken);
     }
 }
