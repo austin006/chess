@@ -15,7 +15,7 @@ public class MemoryAuthDAO implements AuthDAO{
     @Override
     public void createAuth(AuthData authData) throws DataAccessException {
         if(authDAOHashMap.containsKey(authData.username())) {
-            throw new DataAccessException("Error: AuthData for username already exists.");
+            throw new DataAccessException("Error: unauthorized");
         }
         authDAOHashMap.put(authData.username(), authData);
     }

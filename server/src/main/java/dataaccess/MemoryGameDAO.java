@@ -17,7 +17,7 @@ public class MemoryGameDAO implements GameDAO{
     @Override
     public void createGame(GameData game) throws DataAccessException {
         if(games.containsKey(game.gameID())) {
-            throw new DataAccessException("Error: Game already exists.");
+            throw new DataAccessException("Error: bad request.");
         }
         games.put(game.gameID(), game);
     }
@@ -35,7 +35,7 @@ public class MemoryGameDAO implements GameDAO{
     @Override
     public void updateGame(GameData game) throws DataAccessException {
         if(!games.containsKey(game.gameID())) {
-            throw new DataAccessException("Error: Game does not exist.");
+            throw new DataAccessException("Error: bad request");
         }
         games.put(game.gameID(), game);
     }
