@@ -1,5 +1,4 @@
 //package server;
-//
 //import chess.*;
 //
 //public class ServerMain {
