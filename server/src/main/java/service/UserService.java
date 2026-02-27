@@ -72,7 +72,7 @@ public class UserService {
     }
 
     public void logout(String authToken) throws DataAccessException {
-        // Check if username exists
+        // Check if token exists
         if (authDAO.getAuth(authToken) == null) {
             throw new DataAccessException("Error: unauthorized");
         }
