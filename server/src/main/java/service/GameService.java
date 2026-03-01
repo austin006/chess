@@ -64,6 +64,11 @@ public class GameService {
             throw new DataAccessException("Error: bad request");
         }
 
+        // check team color is black or white
+        if (!Objects.equals(joinGameRequest.playerColor(), "WHITE") && !Objects.equals(joinGameRequest.playerColor(), "BLACK")) {
+            throw new DataAccessException("Error: bad request");
+        }
+
         // Update username
         String blackUser = currentGame.blackUsername();
         String whiteUser = currentGame.whiteUsername();
