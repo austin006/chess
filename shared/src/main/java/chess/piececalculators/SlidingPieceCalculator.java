@@ -1,20 +1,17 @@
-package chess.PieceCalculators;
+package chess.piececalculators;
 
 import chess.ChessBoard;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class RookMovesCalculator implements PieceMovesCalculator{
-    @Override
-    public Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
-        List<ChessMove> moves = new ArrayList<>();
+public abstract class SlidingPieceCalculator implements PieceMovesCalculator {
 
-        int[][] directions = {{0,1}, {0,-1}, {-1,0}, {1, 0}};
+    protected Collection<ChessMove> calculateLinearMoves(ChessBoard board, ChessPosition position, int[][] directions) {
+        List<ChessMove> moves = new ArrayList<>();
 
         for(int[] direction : directions) {
             int row = position.getRow();
@@ -24,7 +21,7 @@ public class RookMovesCalculator implements PieceMovesCalculator{
                 row += direction[0];
                 col += direction[1];
 
-                if(row > 8 || row < 1 || col < 1 || col > 8) break;
+                if(row > 8 || row < 1 || col < 1 || col > 8) {break;}
 
                 ChessPosition potentialSpace = new ChessPosition(row, col);
                 ChessPiece pieceAtSpace = board.getPiece(potentialSpace);

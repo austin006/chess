@@ -138,21 +138,34 @@ public class ChessGame {
 
     private boolean isInCheck(TeamColor teamColor, ChessBoard boardToCheck) {
         ChessPosition kingPosition = boardToCheck.getKingPosition(teamColor);
-        // put all moves of opponent in a list
+
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition currentPosition = new ChessPosition(row, col);
-                ChessPiece currentPiece = boardToCheck.getPiece(currentPosition);
-                if(currentPiece != null && currentPiece.getTeamColor() != teamColor) {
-                    // check if taking the king is an end position for any move
-                    for(ChessMove move: currentPiece.pieceMoves(boardToCheck, currentPosition)) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
-                    }
+
+                if (canPieceAttackTarget(boardToCheck, currentPosition, teamColor, kingPosition)) {
+                    return true;
                 }
             }
         }
+        return false;
+    }
+
+    private boolean canPieceAttackTarget(ChessBoard board, ChessPosition attackerPos, TeamColor defendingColor, ChessPosition targetPos) {
+        ChessPiece piece = board.getPiece(attackerPos);
+
+        // If the square is empty, or it's our own piece, it can't attack
+        if (piece == null || piece.getTeamColor() == defendingColor) {
+            return false;
+        }
+
+        // Check if any of this piece's valid moves land on the target position
+        for (ChessMove move : piece.pieceMoves(board, attackerPos)) {
+            if (move.getEndPosition().equals(targetPos)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
