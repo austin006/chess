@@ -28,9 +28,16 @@ public class Server {
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
-        userDAO = new MemoryUserDAO();
-        authDAO = new MemoryAuthDAO();
-        gameDAO = new MemoryGameDAO();
+
+        try {
+            SQLUserDAO.configureDatabase();
+        } catch (DataAccessException e) {
+            System.out.println("Couldn't create database: " + e.getMessage());
+        }
+
+        userDAO = new SQLUserDAO();
+        authDAO = new SQLAuthDAO();
+        gameDAO = new SQLGameDAO();
         userService = new UserService(userDAO, authDAO);
         gameService = new GameService(authDAO, gameDAO);
 
