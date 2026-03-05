@@ -5,6 +5,7 @@ import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 import service.request.LoginRequest;
 import service.request.RegisterRequest;
 import service.result.LoginResult;
@@ -33,8 +34,11 @@ public class UserService {
             throw new DataAccessException("Error: already taken");
         }
 
+        // Hash the password
+        String hashedPassword = BCrypt.hashpw(request.password(), BCrypt.gensalt());
+
         // Create the User
-        UserData newUser = new UserData(request.username(), request.password(), request.email());
+        UserData newUser = new UserData(request.username(), hashedPassword, request.email());
         userDAO.createUser(newUser);
 
         // Generate an Auth Token -> this logs the user in
@@ -58,7 +62,7 @@ public class UserService {
         }
 
         // Check if password is incorrect
-        if (!Objects.equals(userDAO.getUser(request.username()).password(), request.password())) {
+        if (!BCrypt.checkpw(request.password(), userDAO.getUser(request.username()).password())) {
             throw new DataAccessException("Error: unauthorized");
         }
 
