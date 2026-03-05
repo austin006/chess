@@ -21,12 +21,16 @@ public class GameServiceTests {
     private UserService userService;
 
     @BeforeEach
-    public void setup() {
-        userDAO = new MemoryUserDAO();
-        authDAO = new MemoryAuthDAO();
-        gameDAO = new MemoryGameDAO();
+    public void setup() throws DataAccessException {
+        userDAO = new SQLUserDAO();
+        authDAO = new SQLAuthDAO();
+        gameDAO = new SQLGameDAO();
         gameService = new GameService(authDAO, gameDAO);
         userService = new UserService(userDAO, authDAO);
+
+        userDAO.clear();
+        authDAO.clear();
+        gameDAO.clear();
     }
 
     // CREATEGAME TESTS
