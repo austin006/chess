@@ -4,7 +4,6 @@ import model.AuthData;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
 public class SQLAuthDAO implements AuthDAO{
     @Override
@@ -14,8 +13,8 @@ public class SQLAuthDAO implements AuthDAO{
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(statement)) {
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to clear authTokens: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to clear authTokens: %s", e.getMessage()));
         }
     }
 
@@ -28,8 +27,8 @@ public class SQLAuthDAO implements AuthDAO{
             ps.setString(1, authData.authToken());
             ps.setString(2, authData.username());
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to create authData: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to create authData: %s", e.getMessage()));
         }
     }
 
@@ -47,8 +46,8 @@ public class SQLAuthDAO implements AuthDAO{
                     return new AuthData(rs.getString("authToken"), rs.getString("username"));
                 }
             }
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to read data: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to read data: %s", e.getMessage()));
         }
 
         return null;
@@ -62,8 +61,8 @@ public class SQLAuthDAO implements AuthDAO{
              var ps = conn.prepareStatement(statement)) {
             ps.setString(1, authToken);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to delete authToken: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to delete authToken: %s", e.getMessage()));
         }
     }
 }

@@ -12,8 +12,8 @@ public class SQLUserDAO implements UserDAO{
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(statement)) {
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to clear users: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to clear users: %s", e.getMessage()));
         }
     }
 
@@ -27,8 +27,8 @@ public class SQLUserDAO implements UserDAO{
             ps.setString(2, user.password());
             ps.setString(3, user.email());
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to create user: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to create user: %s", e.getMessage()));
         }
     }
 
@@ -46,8 +46,8 @@ public class SQLUserDAO implements UserDAO{
                     return new UserData(rs.getString("username"), rs.getString("password"), rs.getString("email"));
                 }
             }
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Unable to read data: %s", e.getMessage()));
+        } catch (Exception e) {
+            throw new DataAccessException(String.format("Error: unable to read data: %s", e.getMessage()));
         }
 
         return null;
@@ -89,8 +89,8 @@ public class SQLUserDAO implements UserDAO{
                     preparedStatement.executeUpdate();
                 }
             }
-        } catch (SQLException ex) {
-            throw new DataAccessException(String.format("Unable to configure database: %s", ex.getMessage()));
+        } catch (Exception ex) {
+            throw new DataAccessException(String.format("Error: unable to configure database: %s", ex.getMessage()));
         }
     }
 }
