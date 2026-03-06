@@ -60,14 +60,7 @@ public class SQLAuthDAOTests {
     @Test
     @DisplayName("Get Auth - Positive")
     public void getAuthSuccess() throws DataAccessException {
-        AuthData expectedData = new AuthData("authToken", "testUser");
-        authDAO.createAuth(expectedData);
-
-        AuthData actualData = authDAO.getAuth("authToken");
-
-        assertNotNull(actualData);
-        assertEquals(expectedData.authToken(), actualData.authToken());
-        assertEquals(expectedData.username(), actualData.username());
+        createAuthSuccess();
     }
 
     @Test

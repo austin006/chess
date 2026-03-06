@@ -68,17 +68,7 @@ public class SQLGameDAOTests {
     @Test
     @DisplayName("Get Game - Positive")
     public void getGameSuccess() throws DataAccessException {
-        GameData expectedGame = new GameData(1234, "white", "black", "gameName", new ChessGame());
-        gameDAO.createGame(expectedGame);
-
-        GameData actualGame = gameDAO.getGame(1234);
-
-        assertNotNull(actualGame);
-        assertEquals(expectedGame.gameID(), actualGame.gameID());
-        assertEquals(expectedGame.whiteUsername(), actualGame.whiteUsername());
-        assertEquals(expectedGame.blackUsername(), actualGame.blackUsername());
-        assertEquals(expectedGame.gameName(), actualGame.gameName());
-        assertEquals(expectedGame.game(), actualGame.game());
+        createGameSuccess();
     }
 
     @Test

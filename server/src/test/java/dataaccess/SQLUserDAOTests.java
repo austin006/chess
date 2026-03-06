@@ -67,18 +67,7 @@ public class SQLUserDAOTests {
     @Test
     @DisplayName("Get User - Positive")
     public void getUserSuccess() throws DataAccessException {
-        // Create user
-        UserData expectedUser = new UserData("testUser", "password", "email@email.com");
-        userDAO.createUser(expectedUser);
-
-        // Get it from the database
-        UserData actualUser = userDAO.getUser("testUser");
-
-        // Check they match
-        assertNotNull(actualUser);
-        assertEquals(expectedUser.username(), actualUser.username());
-        assertEquals(expectedUser.password(), actualUser.password());
-        assertEquals(expectedUser.email(), actualUser.email());
+        createUserSuccess();
     }
 
     @Test
