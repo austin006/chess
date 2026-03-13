@@ -3,37 +3,35 @@ package client;
 import java.util.Arrays;
 import java.util.Scanner;
 
-import com.google.gson.Gson;
-import service.request.CreateGameRequest;
-import service.request.JoinGameRequest;
-import service.request.LoginRequest;
-import service.request.RegisterRequest;
-import service.result.CreateGameResult;
-import service.result.ListGamesResult;
-import service.result.LoginResult;
-import service.result.RegisterResult;
+import model.GameData;
+import service.request.*;
+import service.result.*;
 
 public class ChessClient {
-    private String visitorName = null;
     private final ServerFacade server;
     private State state = State.SIGNED_OUT;
+    private GameData[] gameList;
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
     }
 
     public void run() {
-        System.out.println(" Welcome to 240 chess. Type Help to get started.");
+        System.out.println("♛ Welcome to CS240 chess. Type Help to get started. ♛");
         System.out.print(help());
 
         Scanner scanner = new Scanner(System.in);
         var result = "";
-        while (!result.equals("quit")) {
+
+        while (!"quit".equals(result)) {
             printPrompt();
             String line = scanner.nextLine();
 
             try {
                 result = eval(line);
+                if (result == null) {
+                    result = "Error: Server connection failed or returned an empty response.";
+                }
                 System.out.print(result);
             } catch (Throwable e) {
                 var msg = e.toString();
@@ -44,7 +42,7 @@ public class ChessClient {
     }
 
     private void printPrompt() {
-        System.out.print("\n" + "[state]" + ">>> ");
+        System.out.print("\n" + "[" + state + "] >>> ");
     }
 
     public String eval(String input) {
@@ -96,13 +94,20 @@ public class ChessClient {
 
     public String listGames() throws ResponseException {
         assertSignedIn();
-        ListGamesResult result = server.listGames();
-        var result = new StringBuilder();
-        var gson = new Gson();
-        for (ChessGame game: games) {
-            result.append(gson.toJson(game)).append('\n');
+        var result = server.listGames();
+        this.gameList = result.games().toArray(new GameData[0]);
+
+        var sb = new StringBuilder();
+        sb.append("Current Games:\n");
+        for (int i = 0; i < gameList.length; i++) {
+            GameData game = gameList[i];
+            sb.append(String.format("%d. %s | White: %s | Black: %s\n",
+                    (i + 1),
+                    game.gameName(),
+                    game.whiteUsername() == null ? "Empty" : game.whiteUsername(),
+                    game.blackUsername() == null ? "Empty" : game.blackUsername()));
         }
-        return result.toString();
+        return sb.toString();
     }
 
     public String createGame(String... params) throws ResponseException {
@@ -118,11 +123,23 @@ public class ChessClient {
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
         if (params.length >= 2) {
-            JoinGameRequest request = new JoinGameRequest(params[0], params[1]);
-            server.joinGame(request);
-            return String.format("You joined the game on the %s team.", request.playerColor());
+            try {
+                int uiIndex = Integer.parseInt(params[1]);
+                if (gameList == null || uiIndex < 1 || uiIndex > gameList.length) {
+                    return "Invalid game number. Please run 'list' to see available games.";
+                }
+                int realGameID = gameList[uiIndex - 1].gameID();
+
+                JoinGameRequest request = new JoinGameRequest(params[0].toUpperCase(), realGameID);
+                server.joinGame(request);
+
+                return String.format("You joined the game on the %s team.", request.playerColor());
+
+            } catch (NumberFormatException e) {
+                return "Expected a number for the game ID.";
+            }
         }
-        throw new ResponseException(400, "Expected: <teamcolor> <gameID>");
+        throw new ResponseException(400, "Expected: <teamcolor> <gameNumber>");
     }
 
     public String help() {
