@@ -4,18 +4,26 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 import com.google.gson.Gson;
+import service.request.CreateGameRequest;
+import service.request.JoinGameRequest;
+import service.request.LoginRequest;
+import service.request.RegisterRequest;
+import service.result.CreateGameResult;
+import service.result.ListGamesResult;
+import service.result.LoginResult;
+import service.result.RegisterResult;
 
 public class ChessClient {
     private String visitorName = null;
     private final ServerFacade server;
     private State state = State.SIGNED_OUT;
 
-    public ChessClient(String serverUrl) throws ResponseException {
+    public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
     }
 
     public void run() {
-        System.out.println(" Welcome to the pet store. Sign in to start.");
+        System.out.println(" Welcome to 240 chess. Type Help to get started.");
         System.out.print(help());
 
         Scanner scanner = new Scanner(System.in);
@@ -36,7 +44,7 @@ public class ChessClient {
     }
 
     private void printPrompt() {
-        System.out.print("\n" + ">>> ");
+        System.out.print("\n" + "[state]" + ">>> ");
     }
 
     public String eval(String input) {
@@ -45,12 +53,12 @@ public class ChessClient {
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
-                case "signin" -> signIn(params);
-                case "rescue" -> rescuePet(params);
-                case "list" -> listPets();
-                case "signout" -> signOut();
-                case "adopt" -> adoptPet(params);
-                case "adoptall" -> adoptAllPets();
+                case "register" -> register(params);
+                case "login" -> login(params);
+                case "logout" -> logout();
+                case "list" -> listGames();
+                case "create" -> createGame(params);
+                case "join" -> joinGame(params);
                 case "quit" -> "quit";
                 default -> help();
             };
@@ -59,95 +67,81 @@ public class ChessClient {
         }
     }
 
-    public String signIn(String... params) throws ResponseException {
-        if (params.length >= 1) {
+    public String register(String... params) throws ResponseException {
+        if (params.length >= 3) {
+            RegisterRequest request = new RegisterRequest(params[0], params[1], params[2]);
+            RegisterResult result = server.register(request);
             state = State.SIGNED_IN;
-            visitorName = String.join("-", params);
-            return String.format("You signed in as %s.", visitorName);
+            return String.format("You signed in as %s.", result.username());
         }
-        throw new ResponseException(400, "Expected: <yourname>");
+        throw new ResponseException(400, "Expected: <username> <password> <email>");
     }
 
-    public String rescuePet(String... params) throws ResponseException {
-        assertSignedIn();
+    public String login(String... params) throws ResponseException {
         if (params.length >= 2) {
-            String name = params[0];
-            PetType type = PetType.valueOf(params[1].toUpperCase());
-            var pet = new Pet(0, name, type);
-            pet = server.addPet(pet);
-            return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
+            LoginRequest request = new LoginRequest(params[0], params[1]);
+            LoginResult result = server.login(request);
+            state = State.SIGNED_IN;
+            return String.format("You signed in as %s.", result.username());
         }
-        throw new ResponseException(400, "Expected: <name> <CAT|DOG|FROG>");
+        throw new ResponseException(400, "Expected: <username> <password>");
     }
 
-    public String listPets() throws ResponseException {
+    public String logout() throws ResponseException {
         assertSignedIn();
-        PetList pets = server.listPets();
+        server.logout();
+        state = State.SIGNED_OUT;
+        return "You successfully signed out";
+    }
+
+    public String listGames() throws ResponseException {
+        assertSignedIn();
+        ListGamesResult result = server.listGames();
         var result = new StringBuilder();
         var gson = new Gson();
-        for (Pet pet : pets) {
-            result.append(gson.toJson(pet)).append('\n');
+        for (ChessGame game: games) {
+            result.append(gson.toJson(game)).append('\n');
         }
         return result.toString();
     }
 
-    public String adoptPet(String... params) throws ResponseException {
+    public String createGame(String... params) throws ResponseException {
         assertSignedIn();
-        if (params.length == 1) {
-            try {
-                int id = Integer.parseInt(params[0]);
-                Pet pet = getPet(id);
-                if (pet != null) {
-                    server.deletePet(id);
-                    return String.format("%s says %s", pet.name(), pet.sound());
-                }
-            } catch (NumberFormatException ignored) {
-            }
+        if (params.length >= 1) {
+            CreateGameRequest request = new CreateGameRequest(params[0]);
+            CreateGameResult result = server.createGame(request);
+            return "You created a new game.";
         }
-        throw new ResponseException(ResponseException.Code.ClientError, "Expected: <pet id>");
+        throw new ResponseException(400, "Expected: <gamename>");
     }
 
-    public String adoptAllPets() throws ResponseException {
+    public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
-        var buffer = new StringBuilder();
-        for (Pet pet : server.listPets()) {
-            buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
+        if (params.length >= 2) {
+            JoinGameRequest request = new JoinGameRequest(params[0], params[1]);
+            server.joinGame(request);
+            return String.format("You joined the game on the %s team.", request.playerColor());
         }
-
-        server.deleteAllPets();
-        return buffer.toString();
-    }
-
-    public String signOut() throws ResponseException {
-        assertSignedIn();
-        ws.leavePetShop(visitorName);
-        state = State.SIGNED_OUT;
-        return String.format("%s left the shop", visitorName);
-    }
-
-    private Pet getPet(int id) throws ResponseException {
-        for (Pet pet : server.listPets()) {
-            if (pet.id() == id) {
-                return pet;
-            }
-        }
-        return null;
+        throw new ResponseException(400, "Expected: <teamcolor> <gameID>");
     }
 
     public String help() {
         if (state == State.SIGNED_OUT) {
             return """
-                    - signIn <yourname>
-                    - quit
+                    register <USERNAME> <PASSWORD> <EMAIL> - to create an account
+                    login <USERNAME> <PASSWORD> - to play chess
+                    quit - playing chess
+                    help - with possible commands
                     """;
         }
         return """
-                - list
-                - adopt <pet id>
-                - rescue <name> <CAT|DOG|FROG|FISH>
-                - adoptAll
-                - signOut
-                - quit
+                create <NAME> - a game
+                list - games
+                join <ID> - a game
+                observe <ID> - a game
+                logout - when you are done
+                quit - playing chess
+                help - with possible commands
                 """;
     }
 
