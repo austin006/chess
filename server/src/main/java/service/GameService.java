@@ -73,15 +73,19 @@ public class GameService {
         String blackUser = currentGame.blackUsername();
         String whiteUser = currentGame.whiteUsername();
         if (Objects.equals(joinGameRequest.playerColor(), "WHITE")) {
-            if (whiteUser != null) {
+            if (whiteUser == null || Objects.equals(whiteUser, authData.username())) {
+                whiteUser = authData.username();
+            }
+            else {
                 throw new DataAccessException("Error: already taken");
             }
-            whiteUser = authData.username();
         } else if (Objects.equals(joinGameRequest.playerColor(), "BLACK")) {
-            if (blackUser != null) {
+            if (blackUser == null || Objects.equals(blackUser, authData.username())) {
+                blackUser = authData.username();
+            }
+            else {
                 throw new DataAccessException("Error: already taken");
             }
-            blackUser = authData.username();
         }
 
         // Update game
