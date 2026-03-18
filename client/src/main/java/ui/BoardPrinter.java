@@ -37,7 +37,7 @@ public class BoardPrinter {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
 
-                printPiece(piece, isWhite);
+                printPiece(piece);
             }
 
             System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
@@ -77,13 +77,13 @@ public class BoardPrinter {
         System.out.println("   " + EscapeSequences.RESET_BG_COLOR);
     }
 
-    private static void printPiece(ChessPiece piece, boolean isWhite) {
+    private static void printPiece(ChessPiece piece) {
         if(piece == null) {
             System.out.print(EscapeSequences.EMPTY);
             return;
         }
 
-        if (isWhite) {
+        if (piece.getTeamColor().equals(ChessGame.TeamColor.WHITE)) {
             System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE);
         } else {
             System.out.print(EscapeSequences.SET_TEXT_COLOR_RED);
@@ -100,7 +100,6 @@ public class BoardPrinter {
             case PAWN -> System.out.print(" P ");
         }
         System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
-
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
     }
 }
