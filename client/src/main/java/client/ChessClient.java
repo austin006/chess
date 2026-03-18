@@ -19,7 +19,7 @@ public class ChessClient {
     }
 
     public void run() {
-        System.out.println("♛ Welcome to CS240 chess. Type Help to get started. ♛");
+        System.out.println("♛ Welcome to CS240 Chess ♛");
         System.out.print(help());
 
         Scanner scanner = new Scanner(System.in);
@@ -124,6 +124,9 @@ public class ChessClient {
 
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
+        var result = server.listGames();
+        this.gameList = result.games().toArray(new GameData[0]);
+
         if (params.length == 2) {
             try {
                 int uiIndex = Integer.parseInt(params[1]);
@@ -154,20 +157,20 @@ public class ChessClient {
     public String help() {
         if (state == State.SIGNED_OUT) {
             return """
-                    register <USERNAME> <PASSWORD> <EMAIL> - to create an account
-                    login <USERNAME> <PASSWORD> - to play chess
-                    quit - playing chess
-                    help - with possible commands
+                    register <USERNAME> <PASSWORD> <EMAIL> - Create an account
+                    login <USERNAME> <PASSWORD> - Sign in to play chess
+                    quit - Stop the application
+                    help - List available commands
                     """;
         }
         return """
-                create <NAME> - a game
-                list - games
-                join <ID> - a game
-                observe <ID> - a game
-                logout - when you are done
-                quit - playing chess
-                help - with possible commands
+                create <NAME> - Create a new game
+                list - List existing games
+                join <ID> - Join a game
+                observe <ID> - Watch a game
+                logout - Sign out of chess
+                quit - Stop the application
+                help - List available commands
                 """;
     }
 
