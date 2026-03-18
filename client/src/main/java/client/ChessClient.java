@@ -60,6 +60,7 @@ public class ChessClient {
                 case "list" -> listGames();
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
+                case "observe" -> observeGame(params);
                 case "quit" -> "quit";
                 default -> help();
             };
@@ -125,8 +126,6 @@ public class ChessClient {
 
     public String joinGame(String... params) throws ResponseException {
         assertSignedIn();
-        var result = server.listGames();
-        this.gameList = result.games().toArray(new GameData[0]);
 
         if (params.length == 2) {
             try {
@@ -152,7 +151,37 @@ public class ChessClient {
                 return "Expected a number for the game ID.";
             }
         }
-        throw new ResponseException(400, "Expected: join <teamColor> <gameNumber>");
+        throw new ResponseException(400, "Expected: join [WHITE|BLACK] <ID>");
+    }
+
+    public String observeGame(String... params) throws ResponseException {
+        assertSignedIn();
+
+        if (params.length == 1) {
+            try {
+                int uiIndex = Integer.parseInt(params[0]);
+                if (gameList == null || uiIndex < 1 || uiIndex > gameList.length) {
+                    return "Invalid game number. Please run 'list' to see available games.";
+                }
+                int realGameID = gameList[uiIndex - 1].gameID();
+                String playerColor = "WHITE";
+
+                JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
+                server.joinGame(request);
+
+                // Print out board
+                ChessGame game = gameList[uiIndex - 1].game();
+                if(game != null) {
+                    BoardPrinter.printBoard(game.getBoard(), playerColor);
+                }
+
+                return "You are observing the game";
+
+            } catch (NumberFormatException e) {
+                return "Expected a number for the game ID";
+            }
+        }
+        throw new ResponseException(400, "Expected: observe <ID>");
     }
 
     public String help() {
