@@ -8,6 +8,7 @@ import model.GameData;
 import service.request.*;
 import service.result.*;
 import ui.BoardPrinter;
+import ui.EscapeSequences;
 
 public class ChessClient {
     private final ServerFacade server;
@@ -155,23 +156,24 @@ public class ChessClient {
     }
 
     public String help() {
+        String cmd = EscapeSequences.SET_TEXT_COLOR_BLUE;
+        String desc = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY;
+        String reset = EscapeSequences.RESET_TEXT_COLOR;
+
         if (state == State.SIGNED_OUT) {
-            return """
-                    register <USERNAME> <PASSWORD> <EMAIL> - Create an account
-                    login <USERNAME> <PASSWORD> - Sign in to play chess
-                    quit - Stop the application
-                    help - List available commands
-                    """;
+            return cmd + "  register <USERNAME> <PASSWORD> <EMAIL>" + desc + " - Create an account\n" +
+                    cmd + "  login <USERNAME> <PASSWORD>" + desc + " - Sign in to play chess\n" +
+                    cmd + "  quit" + desc + " - Stop the application\n" +
+                    cmd + "  help" + desc + " - List available commands\n" + reset;
         }
-        return """
-                create <NAME> - Create a new game
-                list - List existing games
-                join <ID> - Join a game
-                observe <ID> - Watch a game
-                logout - Sign out of chess
-                quit - Stop the application
-                help - List available commands
-                """;
+
+        return cmd + "  create <NAME>" + desc + " - Create a new game\n" +
+                cmd + "  list" + desc + " - List existing games\n" +
+                cmd + "  join [WHITE|BLACK] <ID>" + desc + " - Join a game\n" +
+                cmd + "  observe <ID>" + desc + " - Watch a game\n" +
+                cmd + "  logout" + desc + " - Sign out of chess\n" +
+                cmd + "  quit" + desc + " - Stop the application\n" +
+                cmd + "  help" + desc + " - List available commands\n" + reset;
     }
 
     private void assertSignedIn() throws ResponseException {
