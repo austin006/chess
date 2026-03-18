@@ -1,9 +1,15 @@
 package client;
 
 import org.junit.jupiter.api.*;
+import request.CreateGameRequest;
+import request.JoinGameRequest;
+import request.LoginRequest;
+import request.RegisterRequest;
+import result.CreateGameResult;
+import result.ListGamesResult;
+import result.LoginResult;
+import result.RegisterResult;
 import server.Server;
-import service.request.*;
-import service.result.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 

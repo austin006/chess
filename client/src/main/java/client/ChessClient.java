@@ -5,8 +5,13 @@ import java.util.Scanner;
 
 import chess.ChessGame;
 import model.GameData;
-import service.request.*;
-import service.result.*;
+import request.CreateGameRequest;
+import request.JoinGameRequest;
+import request.LoginRequest;
+import request.RegisterRequest;
+import result.CreateGameResult;
+import result.LoginResult;
+import result.RegisterResult;
 import ui.BoardPrinter;
 import ui.EscapeSequences;
 

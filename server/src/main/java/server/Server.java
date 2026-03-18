@@ -6,14 +6,14 @@ import io.javalin.*;
 import io.javalin.http.Context;
 import service.GameService;
 import service.UserService;
-import service.request.CreateGameRequest;
-import service.request.JoinGameRequest;
-import service.request.LoginRequest;
-import service.request.RegisterRequest;
-import service.result.CreateGameResult;
-import service.result.ListGamesResult;
-import service.result.LoginResult;
-import service.result.RegisterResult;
+import request.CreateGameRequest;
+import request.JoinGameRequest;
+import request.LoginRequest;
+import request.RegisterRequest;
+import result.CreateGameResult;
+import result.ListGamesResult;
+import result.LoginResult;
+import result.RegisterResult;
 
 import java.util.Map;
 

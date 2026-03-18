@@ -3,12 +3,12 @@ package service;
 import dataaccess.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import service.request.CreateGameRequest;
-import service.request.JoinGameRequest;
-import service.request.RegisterRequest;
-import service.result.CreateGameResult;
-import service.result.ListGamesResult;
-import service.result.RegisterResult;
+import request.CreateGameRequest;
+import request.JoinGameRequest;
+import request.RegisterRequest;
+import result.CreateGameResult;
+import result.ListGamesResult;
+import result.RegisterResult;
 
 import static org.junit.jupiter.api.Assertions.*;
 
