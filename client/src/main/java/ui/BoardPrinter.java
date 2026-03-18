@@ -37,7 +37,7 @@ public class BoardPrinter {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
 
-                printPiece(piece);
+                printPiece(piece, isWhite);
             }
 
             System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
@@ -64,7 +64,9 @@ public class BoardPrinter {
         String[] headers = {" a ", " b ", " c ", " d ", " e ", " f ", " g ", " h "};
 
         if (isWhite) {
-            for (String h : headers) System.out.print(h);
+            for (String h : headers) {
+                System.out.print(h);
+            }
         } else {
             for (int i = 7; i >= 0; i--) {
                 System.out.print(headers[i]);
@@ -75,26 +77,19 @@ public class BoardPrinter {
         System.out.println("   " + EscapeSequences.RESET_BG_COLOR);
     }
 
-    private static void printPiece(ChessPiece piece) {
+    private static void printPiece(ChessPiece piece, boolean isWhite) {
         if(piece == null) {
             System.out.print(EscapeSequences.EMPTY);
             return;
         }
 
-        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+        if (isWhite) {
             System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE);
         } else {
             System.out.print(EscapeSequences.SET_TEXT_COLOR_RED);
         }
 
-//        switch (piece.getPieceType()) {
-//            case KING -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_KING : EscapeSequences.BLACK_KING);
-//            case QUEEN -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_QUEEN : EscapeSequences.BLACK_QUEEN);
-//            case BISHOP -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_BISHOP : EscapeSequences.BLACK_BISHOP);
-//            case KNIGHT -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_KNIGHT : EscapeSequences.BLACK_KNIGHT);
-//            case ROOK -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_ROOK : EscapeSequences.BLACK_ROOK);
-//            case PAWN -> System.out.print(piece.getTeamColor() == ChessGame.TeamColor.WHITE ? EscapeSequences.WHITE_PAWN : EscapeSequences.BLACK_PAWN);
-//        }
+        // Printing letters for pieces
         System.out.print(EscapeSequences.SET_TEXT_BOLD);
         switch (piece.getPieceType()) {
             case KING -> System.out.print(" K ");
@@ -105,6 +100,7 @@ public class BoardPrinter {
             case PAWN -> System.out.print(" P ");
         }
         System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
+
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
     }
 }
