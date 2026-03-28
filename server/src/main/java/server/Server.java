@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
+import server.websocket.WebSocketHandler;
 import service.GameService;
 import service.UserService;
 import request.CreateGameRequest;
@@ -25,6 +26,7 @@ public class Server {
     private final GameDAO gameDAO;
     private final UserService userService;
     private final GameService gameService;
+    private final WebSocketHandler webSocketHandler = new WebSocketHandler();
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
@@ -49,6 +51,11 @@ public class Server {
         javalin.get("/game", this::listGamesHandler);
         javalin.post("/game", this::createGameHandler);
         javalin.put("/game", this::joinGameHandler);
+        javalin.ws("/ws", ws -> {
+            ws.onConnect(webSocketHandler);
+            ws.onMessage(webSocketHandler);
+            ws.onClose(webSocketHandler);
+        });
 
         javalin.exception(DataAccessException.class, (exception, context) -> {
             String errorMessage = new Gson().toJson(Map.of("message", exception.getMessage()));
