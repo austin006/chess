@@ -14,14 +14,26 @@ import result.LoginResult;
 import result.RegisterResult;
 import ui.BoardPrinter;
 import ui.EscapeSequences;
+import websocket.ServerMessageObserver;
+import websocket.WebSocketFacade;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationMessage;
+import websocket.messages.ServerMessage;
 
-public class ChessClient {
+public class ChessClient implements ServerMessageObserver {
     private final ServerFacade server;
     private State state = State.SIGNED_OUT;
     private GameData[] gameList;
 
+    private WebSocketFacade ws;
+    private final String serverUrl;
+    private String playerColor;
+
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
+        this.serverUrl = serverUrl;
     }
 
     public void run() {
@@ -139,18 +151,19 @@ public class ChessClient {
                     return "Invalid game number. Please run 'list' to see available games.";
                 }
                 int realGameID = gameList[uiIndex - 1].gameID();
-                String playerColor = params[0].toUpperCase();
+                playerColor = params[0].toUpperCase();
 
                 JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
                 server.joinGame(request);
 
-                // Print out board
-                ChessGame game = gameList[uiIndex - 1].game();
-                if(game != null) {
-                    BoardPrinter.printBoard(game.getBoard(), playerColor);
+                // Connect to websocket
+                if (ws == null) {
+                    ws = new WebSocketFacade(serverUrl, this);
                 }
+                ws.connect(server.getAuthToken(), realGameID);
+                state = State.IN_GAME;
 
-                return String.format("You joined the game on the %s team.", request.playerColor());
+                return String.format("Joining game %d as %s...", uiIndex, playerColor);
 
             } catch (NumberFormatException e) {
                 return "Expected a number for the game ID.";
@@ -169,7 +182,7 @@ public class ChessClient {
                     return "Invalid game number. Please run 'list' to see available games.";
                 }
                 int realGameID = gameList[uiIndex - 1].gameID();
-                String playerColor = "WHITE";
+                playerColor = "WHITE";
 
                 JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
                 server.joinGame(request);
@@ -201,6 +214,10 @@ public class ChessClient {
                     cmd + "  help" + desc + " - List available commands\n" + reset;
         }
 
+        if (state == State.IN_GAME) {
+            return cmd + " command example" + desc + " - to be completed\n" + reset;
+        }
+
         return cmd + "  create <NAME>" + desc + " - Create a new game\n" +
                 cmd + "  list" + desc + " - List existing games\n" +
                 cmd + "  join [WHITE|BLACK] <ID>" + desc + " - Join a game\n" +
@@ -213,6 +230,30 @@ public class ChessClient {
     private void assertSignedIn() throws ResponseException {
         if (state == State.SIGNED_OUT) {
             throw new ResponseException(400, "You must sign in");
+        }
+    }
+
+    @Override
+    public void notify(ServerMessage message) {
+        switch (message.getServerMessageType()) {
+            case NOTIFICATION -> {
+                var notification = (NotificationMessage) message;
+                System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_GREEN +
+                        notification.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
+                printPrompt();
+            }
+            case ERROR -> {
+                 var error = (ErrorMessage) message;
+                 System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_RED +
+                                   error.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
+                 printPrompt();
+            }
+            case LOAD_GAME -> {
+                var loadGame = (LoadGameMessage) message;
+                System.out.println();
+                BoardPrinter.printBoard(loadGame.getGame().getBoard(), playerColor);
+                printPrompt();
+            }
         }
     }
 }
