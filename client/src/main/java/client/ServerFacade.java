@@ -26,6 +26,8 @@ public class ServerFacade {
         serverUrl = url;
     }
 
+    public String getAuthToken() { return authToken; }
+
     public void clear() throws ResponseException {
         var request = buildRequest("DELETE", "/db", null);
         sendRequest(request);
