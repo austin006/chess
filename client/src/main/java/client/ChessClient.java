@@ -29,6 +29,8 @@ public class ChessClient implements ServerMessageObserver {
     private WebSocketFacade ws;
     private final String serverUrl;
     private String playerColor;
+    private chess.ChessGame currentGame;
+    private int currentGameID;
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
@@ -70,13 +72,24 @@ public class ChessClient implements ServerMessageObserver {
             String cmd = (tokens.length > 0) ? tokens[0] : "help";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
+                // SIGNED_OUT commands
                 case "register" -> register(params);
                 case "login" -> login(params);
+
+                // SIGNED_IN commands
                 case "logout" -> logout();
                 case "list" -> listGames();
                 case "create" -> createGame(params);
                 case "join" -> joinGame(params);
                 case "observe" -> observeGame(params);
+
+                // IN_GAME commands
+                case "redraw" -> redraw();
+                case "leave" -> leave();
+                case "move" -> move(params);
+                case "resign" -> resign();
+                case "highlight" -> highlight(params);
+
                 case "quit" -> "quit";
                 default -> help();
             };
@@ -149,17 +162,17 @@ public class ChessClient implements ServerMessageObserver {
                 if (gameList == null || uiIndex < 1 || uiIndex > gameList.length) {
                     return "Invalid game number. Please run 'list' to see available games.";
                 }
-                int realGameID = gameList[uiIndex - 1].gameID();
+                currentGameID = gameList[uiIndex - 1].gameID();
                 playerColor = params[0].toUpperCase();
 
-                JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
+                JoinGameRequest request = new JoinGameRequest(playerColor, currentGameID);
                 server.joinGame(request);
 
                 // Connect to websocket
                 if (ws == null) {
                     ws = new WebSocketFacade(serverUrl, this);
                 }
-                ws.connect(server.getAuthToken(), realGameID);
+                ws.connect(server.getAuthToken(), currentGameID);
                 state = State.IN_GAME;
 
                 return String.format("Joining game %d as %s...", uiIndex, playerColor);
@@ -201,6 +214,45 @@ public class ChessClient implements ServerMessageObserver {
         throw new ResponseException(400, "Expected: observe <ID>");
     }
 
+    public String redraw() throws ResponseException {
+        assertInGame();
+        BoardPrinter.printBoard(currentGame.getBoard(), playerColor);
+        return "";
+    }
+
+    public String leave() throws ResponseException {
+        assertInGame();
+        ws.leave(server.getAuthToken(), currentGameID);
+        currentGame = null;
+        state = State.SIGNED_IN;
+
+        return "You left the game";
+    }
+
+    public String move(String... params) throws ResponseException {
+        assertInGame();
+        return "Make a move isn't working yet";
+    }
+
+    public String resign() throws ResponseException {
+        assertInGame();
+        System.out.print("Are you sure you want to resign? (yes/no): ");
+        Scanner scanner = new Scanner(System.in);
+        String response = scanner.nextLine().trim().toLowerCase();
+
+        if (response.equals("yes")) {
+             ws.resign(server.getAuthToken(), currentGameID);
+            return "You resigned the game.";
+        }
+
+        return "Resignation cancelled.";
+    }
+
+    public String highlight(String... params) throws ResponseException {
+        assertInGame();
+        return "Highlight isn't working yet";
+    }
+
     public String help() {
         String cmd = EscapeSequences.SET_TEXT_COLOR_BLUE;
         String desc = EscapeSequences.SET_TEXT_COLOR_LIGHT_GREY;
@@ -215,10 +267,10 @@ public class ChessClient implements ServerMessageObserver {
 
         if (state == State.IN_GAME) {
             return cmd + "  redraw" + desc + " - Redraw the chess board\n" +
-                    cmd + "  leave" + desc + " - Leave the game\n" +
-                    cmd + "  move" + desc + " - Make a move\n" +
+                    cmd + "  leave" + desc + " - Leave the game and return to menu\n" +
+                    cmd + "  move <START> <END>" + desc + " - Make a move\n" +
                     cmd + "  resign" + desc + " - Resign and forfeit the game\n" +
-                    cmd + "  highlight" + desc + " - Highlights all legal moves for selected piece\n" +
+                    cmd + "  highlight <PIECE>" + desc + " - Highlight all legal moves for selected piece\n" +
                     cmd + "  help" + desc + " - List available commands\n" + reset;
         }
 
@@ -234,6 +286,12 @@ public class ChessClient implements ServerMessageObserver {
     private void assertSignedIn() throws ResponseException {
         if (state == State.SIGNED_OUT) {
             throw new ResponseException(400, "You must sign in");
+        }
+    }
+
+    private void assertInGame() throws ResponseException {
+        if (state != State.IN_GAME) {
+            throw new ResponseException(400, "You must be in a game");
         }
     }
 
@@ -254,8 +312,8 @@ public class ChessClient implements ServerMessageObserver {
             }
             case LOAD_GAME -> {
                 var loadGame = (LoadGameMessage) message;
-                System.out.println();
-                BoardPrinter.printBoard(loadGame.getGame().getBoard(), playerColor);
+                this.currentGame = loadGame.getGame();
+                BoardPrinter.printBoard(currentGame.getBoard(), playerColor);
                 printPrompt();
             }
         }
