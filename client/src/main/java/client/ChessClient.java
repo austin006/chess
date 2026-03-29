@@ -16,7 +16,6 @@ import ui.BoardPrinter;
 import ui.EscapeSequences;
 import websocket.ServerMessageObserver;
 import websocket.WebSocketFacade;
-import websocket.commands.UserGameCommand;
 import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
@@ -215,7 +214,12 @@ public class ChessClient implements ServerMessageObserver {
         }
 
         if (state == State.IN_GAME) {
-            return cmd + " command example" + desc + " - to be completed\n" + reset;
+            return cmd + "  redraw" + desc + " - Redraw the chess board\n" +
+                    cmd + "  leave" + desc + " - Leave the game\n" +
+                    cmd + "  move" + desc + " - Make a move\n" +
+                    cmd + "  resign" + desc + " - Resign and forfeit the game\n" +
+                    cmd + "  highlight" + desc + " - Highlights all legal moves for selected piece\n" +
+                    cmd + "  help" + desc + " - List available commands\n" + reset;
         }
 
         return cmd + "  create <NAME>" + desc + " - Create a new game\n" +
@@ -245,7 +249,7 @@ public class ChessClient implements ServerMessageObserver {
             case ERROR -> {
                  var error = (ErrorMessage) message;
                  System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_RED +
-                                   error.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
+                                   error.getErrorMessage() + EscapeSequences.RESET_TEXT_COLOR);
                  printPrompt();
             }
             case LOAD_GAME -> {
