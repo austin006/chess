@@ -6,6 +6,7 @@ import dataaccess.SQLGameDAO;
 import io.javalin.websocket.*;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.UserGameCommand;
+import websocket.messages.ErrorMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 
@@ -30,6 +31,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             switch (action.getCommandType()) {
                 case CONNECT -> connect(action, ctx.session);
                 case LEAVE -> leave(action, ctx.session);
+                case RESIGN -> resign(action, ctx.session);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -47,6 +49,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
         var authData = authDAO.getAuth(authToken);
         var gameData = gameDAO.getGame(gameID);
+        String playerColor = gameData.whiteUsername().equals(authData.username()) ? "WHITE" : "BLACK";
 
         // This should send an error message back
         if (authData == null || gameData == null) return;
@@ -55,7 +58,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         var loadGameMsg = new LoadGameMessage(gameData.game());
         session.getRemote().sendString(new Gson().toJson(loadGameMsg));
 
-        var message = String.format("%s joined the game", authData.username());
+        var message = String.format("%s joined the game as %s", authData.username(), playerColor);
         var notificationMsg = new NotificationMessage(message);
         connections.broadcast(gameID, authToken, notificationMsg);
     }
@@ -72,5 +75,37 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         var message = String.format("%s left the game", authData.username());
         var notificationMsg = new NotificationMessage(message);
         connections.broadcast(gameID, authToken, notificationMsg);
+    }
+
+    private void resign(UserGameCommand action, Session session) throws Exception {
+        String authToken = action.getAuthToken();
+        int gameID = action.getGameID();
+
+        var gameData = gameDAO.getGame(gameID);
+        var authData = authDAO.getAuth(authToken);
+
+        if (authData == null) return;
+
+        // Can't resign if you aren't a player
+        boolean isWhite = authData.username().equals(gameData.whiteUsername());
+        boolean isBlack = authData.username().equals(gameData.blackUsername());
+        if (!isWhite && !isBlack) {
+            var error = new ErrorMessage("Error: Observers cannot resign.");
+            session.getRemote().sendString(new Gson().toJson(error));
+            return;
+        }
+        // Can't resign twice
+        if (gameData.game().isGameOver()) {
+            var error = new ErrorMessage("Error: The game is already over.");
+            session.getRemote().sendString(new Gson().toJson(error));
+            return;
+        }
+
+        gameData.game().setGameOver(true);
+        gameDAO.updateGame(gameData);
+
+        var message = String.format("%s resigned\nThe game is finished", authData.username());
+        var notificationMsg = new NotificationMessage(message);
+        connections.broadcast(gameID, "", notificationMsg);
     }
 }

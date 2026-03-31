@@ -14,6 +14,7 @@ public class ChessGame {
 
     private TeamColor teamTurn;
     private ChessBoard board;
+    private boolean isGameOver = false;
 
     public ChessGame() {
         teamTurn = TeamColor.WHITE;
@@ -49,6 +50,14 @@ public class ChessGame {
     @Override
     public int hashCode() {
         return Objects.hash(teamTurn, board);
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        isGameOver = gameOver;
     }
 
     /**
@@ -107,6 +116,9 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
+        if (isGameOver) {
+            throw new InvalidMoveException("Game is over");
+        }
         ChessPiece piece = board.getPiece(move.getStartPosition());
         if(piece != null && teamTurn == piece.getTeamColor() && isValidMove(move)) {
             applyMoveToBoard(move, board);
