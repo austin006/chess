@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import dataaccess.SQLAuthDAO;
 import dataaccess.SQLGameDAO;
 import io.javalin.websocket.*;
+import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.MakeMoveCommand;
 import websocket.commands.UserGameCommand;
@@ -83,9 +84,26 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         int gameID = action.getGameID();
 
         var authData = authDAO.getAuth(authToken);
-        if (authData == null) return;
+        var gameData = gameDAO.getGame(gameID);
+        if (authData == null || gameData == null) return;
 
         connections.remove(gameID, authToken);
+
+        // Remove player from game database
+        boolean isWhite = authData.username().equals(gameData.whiteUsername());
+        boolean isBlack = authData.username().equals(gameData.blackUsername());
+        if (isBlack || isWhite) {
+            String newWhite = isWhite ? null : gameData.whiteUsername();
+            String newBlack = isBlack ? null : gameData.blackUsername();
+
+            var updatedGame = new GameData(
+                    gameData.gameID(),
+                    newWhite,
+                    newBlack,
+                    gameData.gameName(),
+                    gameData.game());
+            gameDAO.updateGame(updatedGame);
+        }
 
         var message = String.format("%s left the game", authData.username());
         var notificationMsg = new NotificationMessage(message);
@@ -175,7 +193,11 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         session.getRemote().sendString(new Gson().toJson(loadGameMsg));
         connections.broadcast(gameID, authToken, loadGameMsg);
         // Broadcast the action
-        var message = String.format("%s moved %s from %s to %s", authData.username(), gameData.game().getBoard().getPiece(move.getEndPosition()), move.getStartPosition(), move.getEndPosition());
+        var message = String.format("%s moved %s from %s to %s",
+                authData.username(),
+                gameData.game().getBoard().getPiece(move.getEndPosition()),
+                move.getStartPosition(),
+                move.getEndPosition());
         var notificationMsg = new NotificationMessage(message);
         connections.broadcast(gameID, authToken, notificationMsg);
         // Check the game state
