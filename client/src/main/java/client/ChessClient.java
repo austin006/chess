@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 import chess.ChessGame;
+import chess.ChessPosition;
 import model.GameData;
 import request.CreateGameRequest;
 import request.JoinGameRequest;
@@ -250,7 +251,13 @@ public class ChessClient implements ServerMessageObserver {
 
     public String highlight(String... params) throws ResponseException {
         assertInGame();
-        return "Highlight isn't working yet";
+        if (params.length != 1) {
+            throw new ResponseException(400, "Expected: highlight <position>");
+        }
+        ChessPosition position = parsePosition(params[0]);
+        var validMoves = currentGame.validMoves(position);
+        BoardPrinter.printBoard(currentGame.getBoard(), playerColor, position, validMoves);
+        return "";
     }
 
     public String help() {
@@ -296,6 +303,18 @@ public class ChessClient implements ServerMessageObserver {
         if (state != State.IN_GAME) {
             throw new ResponseException(400, "You must be in a game");
         }
+    }
+
+    private ChessPosition parsePosition(String pos) throws ResponseException {
+        if (pos == null || pos.length() != 2) {
+            throw new ResponseException(400, "Invalid position format. Expected: e2, a5, etc.");
+        }
+        int col = pos.toLowerCase().charAt(0) - 'a' +1;
+        int row = pos.charAt(1) -'0';
+        if (row < 1 || row > 8 || col < 1 || col > 8) {
+            throw new ResponseException(400, "Position out of bounds. Must be between a1 and h8.");
+        }
+        return new ChessPosition(row, col);
     }
 
     @Override

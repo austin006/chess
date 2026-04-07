@@ -7,6 +7,10 @@ import chess.ChessPosition;
 
 public class BoardPrinter {
     public static void printBoard(ChessBoard board, String playerColor) {
+        printBoard(board, playerColor, null, null);
+    }
+
+    public static void printBoard(ChessBoard board, String playerColor, ChessPosition startPos, java.util.Collection<chess.ChessMove> validMoves) {
         boolean isWhite = !"BLACK".equalsIgnoreCase(playerColor);
 
         int startRow = isWhite ? 8 : 1;
@@ -27,16 +31,35 @@ public class BoardPrinter {
 
             for (int col = startCol; col != endCol + colDirection; col += colDirection) {
                 boolean isLightSquare = (row + col) % 2 != 0;
+                ChessPosition position = new ChessPosition(row, col);
 
-                if (isLightSquare) {
+                boolean isStart = (startPos != null && startPos.equals(position));
+                boolean isHighlight = false;
+                if (validMoves != null) {
+                    for (chess.ChessMove move : validMoves) {
+                        if (move.getEndPosition().equals(position)) {
+                            isHighlight = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isStart) {
+                    System.out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
+                } else if (isHighlight) {
+                    if (isLightSquare) {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_GREEN);
+                    }
+                    else {
+                        System.out.print(EscapeSequences.SET_BG_COLOR_DARK_GREEN);
+                    }
+                } else if (isLightSquare) {
                     System.out.print(EscapeSequences.SET_BG_COLOR_WHITE);
                 } else {
                     System.out.print(EscapeSequences.SET_BG_COLOR_BLACK);
                 }
 
-                ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
-
                 printPiece(piece);
             }
 
@@ -52,7 +75,7 @@ public class BoardPrinter {
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
     }
 
-    private static void printHeaders(boolean isWhite) {
+        private static void printHeaders(boolean isWhite) {
         System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
         System.out.print(EscapeSequences.SET_TEXT_COLOR_BLACK);
         System.out.print(EscapeSequences.SET_TEXT_BOLD);
