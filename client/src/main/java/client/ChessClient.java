@@ -134,10 +134,10 @@ public class ChessClient implements ServerMessageObserver {
         this.gameList = result.games().toArray(new GameData[0]);
 
         var sb = new StringBuilder();
-        sb.append("Current Games:\n");
+        sb.append("Current Games:");
         for (int i = 0; i < gameList.length; i++) {
             GameData game = gameList[i];
-            sb.append(String.format("%d. %s | White: %s | Black: %s",
+            sb.append(String.format("\n%d. %s | White: %s | Black: %s",
                     (i + 1),
                     game.gameName(),
                     game.whiteUsername() == null ? "Empty" : game.whiteUsername(),
@@ -197,20 +197,17 @@ public class ChessClient implements ServerMessageObserver {
                     return "Invalid game number\nPlease run 'list' to see available games";
                 }
                 int realGameID = gameList[uiIndex - 1].gameID();
-                playerColor = "WHITE";
 
-                JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
-                server.joinGame(request);
+                this.playerColor = "WHITE";
+                this.currentGameID = realGameID;
 
-                state = State.IN_GAME;
-
-                // Print out board
-                ChessGame game = gameList[uiIndex - 1].game();
-                if(game != null) {
-                    BoardPrinter.printBoard(game.getBoard(), playerColor);
+                if (ws == null) {
+                    ws = new WebSocketFacade(serverUrl, this);
                 }
+                ws.connect(server.getAuthToken(), realGameID);
 
-                return "You are observing the game";
+                this.state = State.IN_GAME;
+                return "Connecting as an observer...";
 
             } catch (NumberFormatException e) {
                 return "Expected a number for the game ID";
@@ -346,19 +343,20 @@ public class ChessClient implements ServerMessageObserver {
         switch (message.getServerMessageType()) {
             case NOTIFICATION -> {
                 var notification = (NotificationMessage) message;
-                System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_GREEN +
+                System.out.print("\n" + EscapeSequences.SET_TEXT_COLOR_GREEN +
                         notification.getMessage() + EscapeSequences.RESET_TEXT_COLOR);
                 printPrompt();
             }
             case ERROR -> {
                  var error = (ErrorMessage) message;
-                 System.out.println("\n" + EscapeSequences.SET_TEXT_COLOR_RED +
+                 System.out.print("\n" + EscapeSequences.SET_TEXT_COLOR_RED +
                                    error.getErrorMessage() + EscapeSequences.RESET_TEXT_COLOR);
                  printPrompt();
             }
             case LOAD_GAME -> {
                 var loadGame = (LoadGameMessage) message;
                 this.currentGame = loadGame.getGame();
+                System.out.println();
                 BoardPrinter.printBoard(currentGame.getBoard(), playerColor);
                 printPrompt();
             }

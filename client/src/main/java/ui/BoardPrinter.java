@@ -20,7 +20,6 @@ public class BoardPrinter {
         int endCol = isWhite ? 8 : 1;
         int colDirection = isWhite ? 1 : -1;
 
-        System.out.println();
         printHeaders(isWhite);
         for (int row = startRow; row != endRow + rowDirection; row += rowDirection) {
             System.out.print(EscapeSequences.SET_BG_COLOR_LIGHT_GREY);
@@ -62,7 +61,6 @@ public class BoardPrinter {
             System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
             System.out.println(EscapeSequences.RESET_BG_COLOR);
         }
-
         printHeaders(isWhite);
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
     }

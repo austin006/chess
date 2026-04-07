@@ -200,12 +200,11 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         var loadGameMsg = new LoadGameMessage(gameData.game());
         session.getRemote().sendString(new Gson().toJson(loadGameMsg));
         connections.broadcast(gameID, authToken, loadGameMsg);
-        // Broadcast the action
+        String pieceName = gameData.game().getBoard().getPiece(move.getEndPosition()).getPieceType().name().toLowerCase();
+        String startString = getPositionString(move.getStartPosition());
+        String endString = getPositionString(move.getEndPosition());
         var message = String.format("%s moved %s from %s to %s",
-                authData.username(),
-                gameData.game().getBoard().getPiece(move.getEndPosition()),
-                move.getStartPosition(),
-                move.getEndPosition());
+                authData.username(), pieceName, startString, endString);
         var notificationMsg = new NotificationMessage(message);
         connections.broadcast(gameID, authToken, notificationMsg);
         // Check the game state
@@ -231,5 +230,10 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             notificationMsg = new NotificationMessage(message);
             connections.broadcast(gameID, "", notificationMsg);
         }
+    }
+
+    private String getPositionString(chess.ChessPosition pos) {
+        char col = (char) ('a' + pos.getColumn() - 1);
+        return "" + col + pos.getRow();
     }
 }
