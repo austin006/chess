@@ -63,7 +63,7 @@ public class ChessClient implements ServerMessageObserver {
     }
 
     private void printPrompt() {
-        System.out.print("\n" + "[" + state + "] >>> ");
+        System.out.print("\n\n" + "[" + state + "] >>> ");
     }
 
     public String eval(String input) {
@@ -103,7 +103,7 @@ public class ChessClient implements ServerMessageObserver {
             RegisterRequest request = new RegisterRequest(params[0], params[1], params[2]);
             RegisterResult result = server.register(request);
             state = State.SIGNED_IN;
-            return String.format("You signed in as %s.", result.username());
+            return String.format("You signed in as %s", result.username());
         }
         throw new ResponseException(400, "Expected: register <username> <password> <email>");
     }
@@ -113,7 +113,7 @@ public class ChessClient implements ServerMessageObserver {
             LoginRequest request = new LoginRequest(params[0], params[1]);
             LoginResult result = server.login(request);
             state = State.SIGNED_IN;
-            return String.format("You signed in as %s.", result.username());
+            return String.format("You signed in as %s", result.username());
         }
         throw new ResponseException(400, "Expected: login <username> <password>");
     }
@@ -122,7 +122,7 @@ public class ChessClient implements ServerMessageObserver {
         assertSignedIn();
         server.logout();
         state = State.SIGNED_OUT;
-        return "You successfully signed out";
+        return "You signed out";
     }
 
     public String listGames() throws ResponseException {
@@ -134,7 +134,7 @@ public class ChessClient implements ServerMessageObserver {
         sb.append("Current Games:\n");
         for (int i = 0; i < gameList.length; i++) {
             GameData game = gameList[i];
-            sb.append(String.format("%d. %s | White: %s | Black: %s\n",
+            sb.append(String.format("%d. %s | White: %s | Black: %s",
                     (i + 1),
                     game.gameName(),
                     game.whiteUsername() == null ? "Empty" : game.whiteUsername(),
@@ -160,7 +160,7 @@ public class ChessClient implements ServerMessageObserver {
             try {
                 int uiIndex = Integer.parseInt(params[1]);
                 if (gameList == null || uiIndex < 1 || uiIndex > gameList.length) {
-                    return "Invalid game number. Please run 'list' to see available games.";
+                    return "Invalid game number\nPlease run 'list' to see available games";
                 }
                 currentGameID = gameList[uiIndex - 1].gameID();
                 playerColor = params[0].toUpperCase();
@@ -178,7 +178,7 @@ public class ChessClient implements ServerMessageObserver {
                 return String.format("Joining game %d as %s...", uiIndex, playerColor);
 
             } catch (NumberFormatException e) {
-                return "Expected a number for the game ID.";
+                return "Expected a number for the game ID";
             }
         }
         throw new ResponseException(400, "Expected: join [WHITE|BLACK] <ID>");
@@ -191,7 +191,7 @@ public class ChessClient implements ServerMessageObserver {
             try {
                 int uiIndex = Integer.parseInt(params[0]);
                 if (gameList == null || uiIndex < 1 || uiIndex > gameList.length) {
-                    return "Invalid game number. Please run 'list' to see available games.";
+                    return "Invalid game number\nPlease run 'list' to see available games";
                 }
                 int realGameID = gameList[uiIndex - 1].gameID();
                 playerColor = "WHITE";
@@ -242,10 +242,10 @@ public class ChessClient implements ServerMessageObserver {
 
         if (response.equals("yes")) {
              ws.resign(server.getAuthToken(), currentGameID);
-            return "You resigned the game.";
+            return "You resigned the game";
         }
 
-        return "Resignation cancelled.";
+        return "Resignation cancelled";
     }
 
     public String highlight(String... params) throws ResponseException {
@@ -262,7 +262,7 @@ public class ChessClient implements ServerMessageObserver {
             return cmd + "  register <USERNAME> <PASSWORD> <EMAIL>" + desc + " - Create an account\n" +
                     cmd + "  login <USERNAME> <PASSWORD>" + desc + " - Sign in to play chess\n" +
                     cmd + "  quit" + desc + " - Stop the application\n" +
-                    cmd + "  help" + desc + " - List available commands\n" + reset;
+                    cmd + "  help" + desc + " - List available commands" + reset;
         }
 
         if (state == State.IN_GAME) {
@@ -271,7 +271,7 @@ public class ChessClient implements ServerMessageObserver {
                     cmd + "  move <START> <END>" + desc + " - Make a move\n" +
                     cmd + "  resign" + desc + " - Resign and forfeit the game\n" +
                     cmd + "  highlight <PIECE>" + desc + " - Highlight all legal moves for selected piece\n" +
-                    cmd + "  help" + desc + " - List available commands\n" + reset;
+                    cmd + "  help" + desc + " - List available commands" + reset;
         }
 
         return cmd + "  create <NAME>" + desc + " - Create a new game\n" +
@@ -280,12 +280,15 @@ public class ChessClient implements ServerMessageObserver {
                 cmd + "  observe <ID>" + desc + " - Watch a game\n" +
                 cmd + "  logout" + desc + " - Sign out of chess\n" +
                 cmd + "  quit" + desc + " - Stop the application\n" +
-                cmd + "  help" + desc + " - List available commands\n" + reset;
+                cmd + "  help" + desc + " - List available commands" + reset;
     }
 
     private void assertSignedIn() throws ResponseException {
         if (state == State.SIGNED_OUT) {
             throw new ResponseException(400, "You must sign in");
+        }
+        if (state == State.IN_GAME) {
+            throw new ResponseException(400, "You must leave your current game");
         }
     }
 

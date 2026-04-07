@@ -45,13 +45,11 @@ public class BoardPrinter {
             System.out.print(EscapeSequences.SET_TEXT_BOLD);
             System.out.print(" " + row + " ");
             System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
-
             System.out.println(EscapeSequences.RESET_BG_COLOR);
         }
 
         printHeaders(isWhite);
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
-        System.out.println();
     }
 
     private static void printHeaders(boolean isWhite) {

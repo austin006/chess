@@ -90,13 +90,13 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         boolean isWhite = authData.username().equals(gameData.whiteUsername());
         boolean isBlack = authData.username().equals(gameData.blackUsername());
         if (!isWhite && !isBlack) {
-            var error = new ErrorMessage("Error: Observers cannot resign.");
+            var error = new ErrorMessage("Error: Observers cannot resign");
             session.getRemote().sendString(new Gson().toJson(error));
             return;
         }
         // Can't resign twice
         if (gameData.game().isGameOver()) {
-            var error = new ErrorMessage("Error: The game is already over.");
+            var error = new ErrorMessage("Error: The game is already over");
             session.getRemote().sendString(new Gson().toJson(error));
             return;
         }
