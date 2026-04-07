@@ -67,8 +67,12 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
         String username = authData.username();
         String role = "an observer";
-        if (username.equals(gameData.whiteUsername())) role = "White";
-        else if (username.equals(gameData.blackUsername())) role = "Black";
+        if (username.equals(gameData.whiteUsername())) {
+            role = "White";
+        }
+        else if (username.equals(gameData.blackUsername())) {
+            role = "Black";
+        }
 
         connections.add(gameID, authToken, session);
         var loadGameMsg = new LoadGameMessage(gameData.game());
@@ -85,7 +89,9 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
         var authData = authDAO.getAuth(authToken);
         var gameData = gameDAO.getGame(gameID);
-        if (authData == null || gameData == null) return;
+        if (authData == null || gameData == null) {
+            return;
+        }
 
         connections.remove(gameID, authToken);
 
@@ -117,7 +123,9 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         var gameData = gameDAO.getGame(gameID);
         var authData = authDAO.getAuth(authToken);
 
-        if (authData == null) return;
+        if (authData == null) {
+            return;
+        }
 
         // Can't resign if you aren't a player
         boolean isWhite = authData.username().equals(gameData.whiteUsername());

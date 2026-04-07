@@ -34,15 +34,7 @@ public class BoardPrinter {
                 ChessPosition position = new ChessPosition(row, col);
 
                 boolean isStart = (startPos != null && startPos.equals(position));
-                boolean isHighlight = false;
-                if (validMoves != null) {
-                    for (chess.ChessMove move : validMoves) {
-                        if (move.getEndPosition().equals(position)) {
-                            isHighlight = true;
-                            break;
-                        }
-                    }
-                }
+                boolean isHighlight = isHighlightSquare(position, validMoves);
 
                 if (isStart) {
                     System.out.print(EscapeSequences.SET_BG_COLOR_YELLOW);
@@ -122,5 +114,17 @@ public class BoardPrinter {
         }
         System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
         System.out.print(EscapeSequences.RESET_TEXT_COLOR);
+    }
+
+    private static boolean isHighlightSquare(ChessPosition currentPos, java.util.Collection<chess.ChessMove> validMoves) {
+        if (validMoves == null) {
+            return false;
+        }
+        for (chess.ChessMove move : validMoves) {
+            if (move.getEndPosition().equals(currentPos)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
