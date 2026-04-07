@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPiece;
 import chess.ChessPosition;
 import model.GameData;
 import request.CreateGameRequest;
@@ -200,6 +202,8 @@ public class ChessClient implements ServerMessageObserver {
                 JoinGameRequest request = new JoinGameRequest(playerColor, realGameID);
                 server.joinGame(request);
 
+                state = State.IN_GAME;
+
                 // Print out board
                 ChessGame game = gameList[uiIndex - 1].game();
                 if(game != null) {
@@ -232,7 +236,27 @@ public class ChessClient implements ServerMessageObserver {
 
     public String move(String... params) throws ResponseException {
         assertInGame();
-        return "Make a move isn't working yet";
+        if (params.length != 2 && params.length != 3) {
+            throw new ResponseException(400, "Expected: move <start> <end> [promotionPiece]\nExample: move d2 c3");
+        }
+
+        ChessPosition start = parsePosition(params[0]);
+        ChessPosition end = parsePosition(params[1]);
+        ChessPiece.PieceType promotionPiece = null;
+
+        if (params.length == 3) {
+            promotionPiece = switch (params[2].toLowerCase()) {
+                case "queen" -> ChessPiece.PieceType.QUEEN;
+                case "rook" -> chess.ChessPiece.PieceType.ROOK;
+                case "bishop" -> chess.ChessPiece.PieceType.BISHOP;
+                case "knight" -> chess.ChessPiece.PieceType.KNIGHT;
+                default -> throw new ResponseException(400, "Invalid promotion piece. Use: queen, rook, bishop, or knight.");
+            };
+        }
+
+        ChessMove move = new ChessMove(start, end, promotionPiece);
+        ws.makeMove(server.getAuthToken(), currentGameID, move);
+        return "Move sent to server...";
     }
 
     public String resign() throws ResponseException {
@@ -252,7 +276,7 @@ public class ChessClient implements ServerMessageObserver {
     public String highlight(String... params) throws ResponseException {
         assertInGame();
         if (params.length != 1) {
-            throw new ResponseException(400, "Expected: highlight <position>");
+            throw new ResponseException(400, "Expected: highlight <position>\nExample: highlight a4");
         }
         ChessPosition position = parsePosition(params[0]);
         var validMoves = currentGame.validMoves(position);
@@ -295,7 +319,7 @@ public class ChessClient implements ServerMessageObserver {
             throw new ResponseException(400, "You must sign in");
         }
         if (state == State.IN_GAME) {
-            throw new ResponseException(400, "You must leave your current game");
+            throw new ResponseException(400, "You are currently in a game");
         }
     }
 
